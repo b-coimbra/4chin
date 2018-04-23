@@ -1,17 +1,28 @@
-#lang racket
+#lang racket/gui
 
-(require net/url
+(require racket/include
+         net/url
          html-parsing
          xml/path)
+
+(include "gui.rkt")
 
 (define args (vector->list (current-command-line-arguments)))
 
 (if (not (eq? (length args) 2))
-    (raise "USAGE: racket 4chin.rkt <url> <folder>")
+    (send dialog show #t)
     (void))
 
-(define url (car args))
-(define folder (string-append (cadr args) "/"))
+(define url null)
+(define folder null)
+
+(if (eq? url-given? #t)
+    (begin
+      (set! url (send url-field get-value))
+      (set! folder "data/"))
+    (begin
+      (set! url (car args))
+      (set! folder (string-append (cadr args) "/"))))
 
 (if (not (directory-exists? folder))
     (make-directory folder)
@@ -37,7 +48,7 @@
 (for ([elem (in-list (remove-duplicates xexpr))])
   (let ([in (list-ref (cdr elem) 0)])
     (if (regexp-match #rx"^//.*.(jpg|png)$" in)
-        (begin
+        (begin0
           (download in)
-          (printf "\e[32m~a\e[0m -> ~a | ~a kb \n" folder in (file-size (basename in))))
+          (printf "\e[32m~a\e[0m => ~a | ~a kb \n" folder in (file-size (basename in))))
         (void))))
